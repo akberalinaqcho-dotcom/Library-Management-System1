@@ -1,0 +1,2408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibraryDB Management System - CS160 NUTECH</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        },
+                        secondary: '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- TOP ALERT SYSTEM / TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-150%] transition-transform duration-300 ease-in-out max-w-sm w-full bg-white shadow-2xl rounded-xl border-l-4 p-4 flex items-start gap-3">
+        <div id="toast-icon" class="text-xl"></div>
+        <div class="flex-1">
+            <h4 id="toast-title" class="font-bold text-slate-900 text-sm"></h4>
+            <p id="toast-desc" class="text-xs text-slate-600 mt-1"></p>
+        </div>
+        <button onclick="hideToast()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+    </div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- SIDE NAVIGATION PANEL -->
+        <aside class="w-full lg:w-64 bg-slate-900 text-slate-200 flex flex-col shrink-0 border-r border-slate-800">
+            <!-- Sidebar Header -->
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-md tracking-tight">LibraryDB Client</h1>
+                        <p class="text-xs text-slate-400">CS160 DBMS | NUTECH</p>
+                    </div>
+                </div>
+                <!-- Mobile Navigation Toggle -->
+                <button id="mobile-menu-btn" class="lg:hidden p-2 text-slate-400 hover:text-white rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav id="sidebar-nav" class="hidden lg:flex flex-col gap-1 p-4 flex-1">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path>
+                    </svg>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('catalog')" id="btn-catalog" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Catalog & Books
+                </button>
+                <button onclick="switchTab('members')" id="btn-members" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Members & Staff
+                </button>
+                <button onclick="switchTab('circulation')" id="btn-circulation" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                    </svg>
+                    Borrow & Return
+                </button>
+                <button onclick="switchTab('fines')" id="btn-fines" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Fines & Reserves
+                </button>
+                <button onclick="switchTab('sql')" id="btn-sql" class="nav-btn flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 w-full text-left">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    CS160 SQL Sandbox
+                </button>
+
+                <div class="mt-auto pt-4 border-t border-slate-800">
+                    <button onclick="resetToSeed()" class="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition w-full py-2 px-4 rounded hover:bg-slate-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 12H18M9 11V1m0 0L5 5m4-4l4 4"></path>
+                        </svg>
+                        Restore SQL Seeds
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MAIN DASHBOARD VIEW AREA -->
+        <main class="flex-1 flex flex-col min-w-0">
+            <!-- Header Bar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <h2 id="view-title" class="text-2xl font-bold text-slate-800">Dashboard Overviews</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-slate-900">Akber ALi</p>
+                        <p class="text-xs text-slate-500">Chief Digital Librarian</p>
+                    </div>
+                    <div class="w-10 h-10 bg-indigo-100 text-indigo-700 font-bold rounded-full flex items-center justify-center border border-indigo-200">
+                        IS
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB CONTAINER -->
+            <div id="tab-content" class="p-6 flex-1 overflow-y-auto">
+
+                <!-- TAB: DASHBOARD -->
+                <div id="tab-dashboard" class="tab-pane space-y-6">
+                    <!-- Stat Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Catalog Books</p>
+                                <h3 id="stat-total-books" class="text-3xl font-extrabold text-slate-900 mt-2">0</h3>
+                                <p class="text-xs text-green-600 font-medium mt-1">Available across titles</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Borrowers</p>
+                                <h3 id="stat-active-borrows" class="text-3xl font-extrabold text-slate-900 mt-2">0</h3>
+                                <p class="text-xs text-indigo-600 font-medium mt-1">Checked out copies</p>
+                            </div>
+                            <div class="p-4 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Outstanding Fines</p>
+                                <h3 id="stat-unpaid-fines" class="text-3xl font-extrabold text-red-600 mt-2">PKR 0</h3>
+                                <p class="text-xs text-red-500 font-medium mt-1" id="stat-unpaid-count">0 Unpaid fines</p>
+                            </div>
+                            <div class="p-4 bg-red-50 text-red-600 rounded-xl">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Reserves</p>
+                                <h3 id="stat-reservations" class="text-3xl font-extrabold text-slate-900 mt-2">0</h3>
+                                <p class="text-xs text-amber-600 font-medium mt-1">Awaiting fulfillment</p>
+                            </div>
+                            <div class="p-4 bg-amber-50 text-amber-600 rounded-xl">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Chart Area (Category Distribution) -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-slate-800">Inventory Stocks by Categories</h4>
+                                <span class="text-xs font-medium text-slate-400">Total books mapped inside database</span>
+                            </div>
+                            <div class="space-y-4" id="category-bar-chart">
+                                <!-- Dynamic category levels go here -->
+                            </div>
+                        </div>
+
+                        <!-- Mini Transaction Activity feed -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-slate-800">Recent System Logs</h4>
+                                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">Live Simulation</span>
+                            </div>
+                            <div id="activity-logs" class="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
+                                <!-- Activities populated automatically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Book Copies Status Grid Quickview -->
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 class="font-bold text-slate-800">Database Physical Book Copies Tracker</h4>
+                                <p class="text-xs text-slate-500 mt-1">Tracking states of primary keys in the <code class="bg-slate-100 px-1 py-0.5 text-red-600 rounded font-mono text-xs">BookCopy</code> table</p>
+                            </div>
+                            <button onclick="switchTab('catalog')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Go to catalog &rarr;</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-3 text-center" id="copy-grid-tracker">
+                            <!-- Dynamic rendering of copy bubbles -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: CATALOG -->
+                <div id="tab-catalog" class="tab-pane hidden space-y-6">
+                    <!-- Filters and Search -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-3 flex-1">
+                            <div class="relative w-full max-w-md">
+                                <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Search Title, Author or ISBN..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <div class="absolute left-3 top-2.5 text-slate-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                            </div>
+                            <select id="catalog-filter-category" onchange="renderCatalog()" class="bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="all">All Categories</option>
+                                <!-- Categories populated dynamic -->
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="openAddBookModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 shadow transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add New Book
+                            </button>
+                            <button onclick="openCategoryModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition">
+                                Categories
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Core Catalog Grid/Table -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200 text-left">
+                                <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-6 py-4">Title & Details</th>
+                                        <th class="px-6 py-4">Category</th>
+                                        <th class="px-6 py-4">Authors</th>
+                                        <th class="px-6 py-4">Copies status</th>
+                                        <th class="px-6 py-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="catalog-table-body" class="divide-y divide-slate-200 text-sm text-slate-600">
+                                    <!-- Dynamic list of Books -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: MEMBERS -->
+                <div id="tab-members" class="tab-pane hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Members Section (Col span 2) -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                                <h3 class="font-bold text-slate-800 text-lg">Member Registry</h3>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" id="member-search" oninput="renderMembers()" placeholder="Search members..." class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <button onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 px-3 rounded-lg transition shrink-0">
+                                        + Member
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                                        <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                                            <tr>
+                                                <th class="px-6 py-4">Card / Name</th>
+                                                <th class="px-6 py-4">Email</th>
+                                                <th class="px-6 py-4">Phone Numbers</th>
+                                                <th class="px-6 py-4">Type & Join Date</th>
+                                                <th class="px-6 py-4">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="members-table-body" class="divide-y divide-slate-200">
+                                            <!-- Dynamic members loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Section (Col span 1) -->
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <h3 class="font-bold text-slate-800 text-lg">Staff Hierarchy</h3>
+                                <button onclick="openAddStaffModal()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold py-2 px-3 rounded-lg transition">
+                                    + Add Staff
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4 max-h-[550px] overflow-y-auto" id="staff-hierarchy-list">
+                                <!-- Dynamic staff objects display -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: CIRCULATION -->
+                <div id="tab-circulation" class="tab-pane hidden space-y-6">
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        <!-- Quick Checkout Panel -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 h-fit">
+                            <div class="border-b border-slate-100 pb-3">
+                                <h3 class="font-bold text-slate-800 text-lg">Simulate Check-Out (DDL/DML)</h3>
+                                <p class="text-xs text-slate-500 mt-1">Performs ACID-like status check and decreases available book counts</p>
+                            </div>
+                            <form id="checkout-form" onsubmit="executeCheckout(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Select Member</label>
+                                    <select id="checkout-member" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <!-- Dynamic options -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Select Book Title</label>
+                                    <select id="checkout-book" onchange="loadBookCopiesForCheckout()" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="">-- Choose Book --</option>
+                                        <!-- Dynamic options -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Select Available Copy ID</label>
+                                    <select id="checkout-copy" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <!-- Dynamic options populated when Book is chosen -->
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Issue Date</label>
+                                        <input type="date" id="checkout-issue-date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Due Date</label>
+                                        <input type="date" id="checkout-due-date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+                                    Issue Transaction & Copy
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Transactions Registry -->
+                        <div class="xl:col-span-2 space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-lg">Transactions List</h3>
+                                    <p class="text-xs text-slate-500">Showing rows of <code class="bg-slate-100 px-1 py-0.5 text-indigo-600 font-mono text-xs">BorrowTransaction</code></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <select id="transaction-status-filter" onchange="renderTransactions()" class="bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <option value="all">All States</option>
+                                        <option value="Active">Active (Out)</option>
+                                        <option value="Returned">Returned</option>
+                                        <option value="Overdue">Overdue Only</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                                        <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                                            <tr>
+                                                <th class="px-6 py-4">Transaction Details</th>
+                                                <th class="px-6 py-4">Borrower Info</th>
+                                                <th class="px-6 py-4">Duration & Dates</th>
+                                                <th class="px-6 py-4">Status</th>
+                                                <th class="px-6 py-4 text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transactions-table-body" class="divide-y divide-slate-200">
+                                            <!-- Dynamic transaction loads -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: FINES -->
+                <div id="tab-fines" class="tab-pane hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Fines Control Area -->
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-lg">Fines Register</h3>
+                                    <p class="text-xs text-slate-500">Outstanding monetary penalization balances</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                                        <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                                            <tr>
+                                                <th class="px-6 py-4">Fine ID</th>
+                                                <th class="px-6 py-4">Transaction / Member</th>
+                                                <th class="px-6 py-4">Penalization Amount</th>
+                                                <th class="px-6 py-4">State</th>
+                                                <th class="px-6 py-4 text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fines-table-body" class="divide-y divide-slate-200">
+                                            <!-- Dynamic fine records -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reservation Controls -->
+                        <div class="space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-lg">Book Reservations</h3>
+                                    <p class="text-xs text-slate-500">Hold lists on books currently out of stock</p>
+                                </div>
+                                <button onclick="openReservationModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 px-3 rounded-lg transition">
+                                    + Hold Reserve
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                                        <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase">
+                                            <tr>
+                                                <th class="px-6 py-4">Member Info</th>
+                                                <th class="px-6 py-4">Target Book</th>
+                                                <th class="px-6 py-4">Valid Range</th>
+                                                <th class="px-6 py-4">Status</th>
+                                                <th class="px-6 py-4 text-right">Modify</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reservations-table-body" class="divide-y divide-slate-200">
+                                            <!-- Dynamic reservations mapped -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: SQL SANBOX -->
+                <div id="tab-sql" class="tab-pane hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Playroom Control Column -->
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 h-fit lg:col-span-1">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">CS160 Relational Sandbox</h3>
+                                <p class="text-xs text-slate-500 mt-1">Choose a SQL statement query compiled from your laboratory assignments and execute it directly on the in-memory client state.</p>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <button onclick="runSimulatedSQL('all_books')" class="w-full text-left bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition p-3 rounded-lg border border-slate-200 flex flex-col gap-1 text-slate-700">
+                                    <span class="text-xs font-bold font-mono text-indigo-600">QUERY_01</span>
+                                    <span class="text-xs font-semibold">SELECT * FROM Book JOIN Category...</span>
+                                    <span class="text-[10px] text-slate-400">Join books with category description lookup</span>
+                                </button>
+                                <button onclick="runSimulatedSQL('overdue_fines')" class="w-full text-left bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition p-3 rounded-lg border border-slate-200 flex flex-col gap-1 text-slate-700">
+                                    <span class="text-xs font-bold font-mono text-indigo-600">QUERY_02</span>
+                                    <span class="text-xs font-semibold">SELECT * FROM Member JOIN Borrow JOIN Fine...</span>
+                                    <span class="text-[10px] text-slate-400">Trace active overdue accounts with pending payments</span>
+                                </button>
+                                <button onclick="runSimulatedSQL('staff_unions')" class="w-full text-left bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition p-3 rounded-lg border border-slate-200 flex flex-col gap-1 text-slate-700">
+                                    <span class="text-xs font-bold font-mono text-indigo-600">QUERY_03</span>
+                                    <span class="text-xs font-semibold">SELECT FullName, Specialization... UNION...</span>
+                                    <span class="text-[10px] text-slate-400">Flatten the complete subtype staff hierarchy list</span>
+                                </button>
+                                <button onclick="runSimulatedSQL('book_authors')" class="w-full text-left bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition p-3 rounded-lg border border-slate-200 flex flex-col gap-1 text-slate-700">
+                                    <span class="text-xs font-bold font-mono text-indigo-600">QUERY_04</span>
+                                    <span class="text-xs font-semibold">SELECT Title, BookAuthor JOIN Author...</span>
+                                    <span class="text-[10px] text-slate-400">Map multiple authors linked per book catalog ID</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Terminal Console View -->
+                        <div class="lg:col-span-2 flex flex-col space-y-4">
+                            <!-- SQL Syntax Console Screen -->
+                            <div class="bg-slate-900 rounded-xl p-5 shadow-inner border border-slate-800 text-emerald-400 font-mono text-xs space-y-3">
+                                <div class="flex items-center justify-between text-slate-400 pb-2 border-b border-slate-800">
+                                    <span>Interactive SQL Console Shell</span>
+                                    <span class="text-[10px] bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded border border-indigo-700">READONLY VIEW</span>
+                                </div>
+                                <div id="sql-query-display" class="bg-slate-950 p-3 rounded text-slate-300 h-24 overflow-y-auto leading-relaxed border border-slate-800/80 whitespace-pre-wrap">-- Click a Query template button on the left panel to execute an relational algebra script inside our browser-bound SQL simulator...</div>
+                            </div>
+
+                            <!-- Results Table -->
+                            <div class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden flex-1 flex flex-col min-h-[300px]">
+                                <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+                                    <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wide">Relational Result Set</h4>
+                                    <span id="sql-row-count" class="text-xs text-slate-500 font-medium">0 rows returned</span>
+                                </div>
+                                <div class="flex-1 overflow-auto max-h-[400px]">
+                                    <table id="sql-results-table" class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                                        <!-- Dynamic table headers and rows loaded by query simulation -->
+                                        <tbody class="text-slate-500 p-8 text-center block">
+                                            <tr><td class="p-8 text-center italic text-slate-400">No active query session loaded. Perform a console selection.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL POPUPS SYSTEM -->
+    <!-- Backdrop -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-center justify-center p-4">
+        
+        <!-- MODAL: ADD BOOK -->
+        <div id="modal-add-book" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Register New Book Record</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <form id="add-book-form" onsubmit="saveNewBook(event)" class="space-y-3 text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ISBN Code *</label>
+                        <input type="text" id="new-book-isbn" placeholder="978-0..." required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Publish Year *</label>
+                        <input type="number" id="new-book-year" min="1000" max="2100" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Book Title *</label>
+                    <input type="text" id="new-book-title" placeholder="Full Novel Name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Publisher Name *</label>
+                        <input type="text" id="new-book-publisher" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Genre Category *</label>
+                        <select id="new-book-category" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Dynamic category select options -->
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Link Author *</label>
+                        <select id="new-book-author" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <!-- Dynamic author names -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Physical Copies *</label>
+                        <input type="number" id="new-book-copies" min="1" max="50" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition mt-4">
+                    Insert Book Record
+                </button>
+            </form>
+        </div>
+
+        <!-- MODAL: ADD MEMBER -->
+        <div id="modal-add-member" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Add Library Member</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <form id="add-member-form" onsubmit="saveNewMember(event)" class="space-y-3 text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Card Number *</label>
+                        <input type="text" id="new-member-card" placeholder="LIB-XXX" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+                        <input type="text" id="new-member-name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address *</label>
+                    <input type="email" id="new-member-email" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Membership Level *</label>
+                        <select id="new-member-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                            <option value="Standard">Standard</option>
+                            <option value="Premium">Premium</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Primary Phone Contact *</label>
+                        <input type="text" id="new-member-phone" placeholder="03XX-XXXXXXX" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Street Residence</label>
+                        <input type="text" id="new-member-street" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">City</label>
+                        <input type="text" id="new-member-city" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition mt-4">
+                    Register Member Record
+                </button>
+            </form>
+        </div>
+
+        <!-- MODAL: ADD STAFF -->
+        <div id="modal-add-staff" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Add Supertype Staff Record</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <form id="add-staff-form" onsubmit="saveNewStaff(event)" class="space-y-3 text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Staff Full Name *</label>
+                        <input type="text" id="new-staff-name" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address *</label>
+                        <input type="email" id="new-staff-email" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Salary (PKR) *</label>
+                        <input type="number" id="new-staff-salary" min="10000" step="500" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hire Date *</label>
+                        <input type="date" id="new-staff-hire" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Staff Subtype Category *</label>
+                    <select id="new-staff-type" onchange="toggleStaffSubtypeFields()" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                        <option value="Librarian">Librarian</option>
+                        <option value="Assistant">Assistant</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                
+                <!-- Dynamic fields for Staff Subtypes -->
+                <div id="subtype-fields-librarian" class="subtype-fields p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg">
+                    <label class="block text-xs font-semibold text-indigo-800 mb-1">Librarian Specialization *</label>
+                    <input type="text" id="new-staff-specialization" placeholder="e.g. Digital Archivist, Cataloguing" class="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div id="subtype-fields-assistant" class="subtype-fields p-3 bg-amber-50/50 border border-amber-100 rounded-lg hidden">
+                    <label class="block text-xs font-semibold text-amber-800 mb-1">Shift Time Rotation *</label>
+                    <select id="new-staff-shift" class="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                        <option value="Morning">Morning</option>
+                        <option value="Evening">Evening</option>
+                        <option value="Night">Night</option>
+                    </select>
+                </div>
+                <div id="subtype-fields-admin" class="subtype-fields p-3 bg-rose-50/50 border border-rose-100 rounded-lg hidden">
+                    <label class="block text-xs font-semibold text-rose-800 mb-1">SysAccess Credentials Level *</label>
+                    <select id="new-staff-access" class="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                        <option value="Level1">Level 1 (Basic)</option>
+                        <option value="Level2">Level 2 (Moderator)</option>
+                        <option value="Level3">Level 3 (Superadmin)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition mt-4">
+                    Insert Staff Hierarchical Record
+                </button>
+            </form>
+        </div>
+
+        <!-- MODAL: ADD RESERVATION -->
+        <div id="modal-add-reservation" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Add Book Hold Reservation</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <form id="add-reservation-form" onsubmit="saveNewReservation(event)" class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Hold Member *</label>
+                    <select id="new-res-member" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Hold Book Title *</label>
+                    <select id="new-res-book" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-indigo-500">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Reservation Date *</label>
+                        <input type="date" id="new-res-start" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2 focus:ring-2 focus:ring-indigo-500 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hold Expiry Date *</label>
+                        <input type="date" id="new-res-expiry" required class="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-2 focus:ring-2 focus:ring-indigo-500 text-xs">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition mt-4">
+                    Place Hold Reservation
+                </button>
+            </form>
+        </div>
+
+        <!-- MODAL: MANAGE CATEGORIES -->
+        <div id="modal-manage-categories" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-lg">Category DDL & Details</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-xs">
+                <!-- Add category mini inline form -->
+                <form id="add-category-form" onsubmit="saveNewCategory(event)" class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                    <p class="font-bold text-slate-700">Add New Category:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input type="text" id="new-cat-name" placeholder="Name" required class="bg-white border border-slate-200 rounded p-1.5 focus:outline-none">
+                        <input type="text" id="new-cat-desc" placeholder="Brief Description" class="bg-white border border-slate-200 rounded p-1.5 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-1 rounded hover:bg-indigo-700">Add Genre Category</button>
+                </form>
+
+                <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-lg">
+                    <table class="min-w-full divide-y divide-slate-100 text-left">
+                        <thead class="bg-slate-50 font-bold text-slate-500 uppercase tracking-wider">
+                            <tr>
+                                <th class="px-3 py-2">ID</th>
+                                <th class="px-3 py-2">Category Name</th>
+                                <th class="px-3 py-2">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-table-body" class="divide-y divide-slate-100">
+                            <!-- Populated categories -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: PHYSICAL COPIES MANAGEMENT -->
+        <div id="modal-copies" class="modal-box bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-xl hidden transform scale-95 opacity-0 transition duration-300 ease-out p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h3 id="copies-modal-title" class="font-bold text-slate-800 text-lg">Physical Book Copies</h3>
+                    <p id="copies-modal-isbn" class="text-xs text-slate-400 font-mono mt-0.5">ISBN</p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-xs">
+                <!-- Add Copy Form -->
+                <div class="bg-indigo-50/50 border border-indigo-100 rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="text-left">
+                        <p class="font-bold text-indigo-950">Simulate Weak Entity Addition</p>
+                        <p class="text-[10px] text-indigo-700">Add a physically tracked <code class="bg-indigo-100 px-1 py-0.2 rounded font-mono">BookCopy</code> to the collection</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="new-copy-condition" class="bg-white border border-indigo-200 rounded py-1 px-2 text-xs">
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Damaged">Damaged</option>
+                        </select>
+                        <button onclick="addPhysicalBookCopyDirectly()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded transition">
+                            + Add Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="min-w-full divide-y divide-slate-200 text-left">
+                        <thead class="bg-slate-50 font-bold text-slate-500 uppercase">
+                            <tr>
+                                <th class="px-4 py-2">Copy ID</th>
+                                <th class="px-4 py-2">Condition State</th>
+                                <th class="px-4 py-2">Circulation State</th>
+                                <th class="px-4 py-2">Acquired</th>
+                                <th class="px-4 py-2 text-right">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="copies-table-body" class="divide-y divide-slate-100">
+                            <!-- Dynamic copies -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LOGICAL DATA ENGINE - SEED DATA POPULATED IN SCRIPT -->
+    <script>
+        // CORE DB TABLES MODEL ACCORDING TO USER SQL
+        let categories = [];
+        let books = [];
+        let authors = [];
+        let bookAuthors = [];
+        let bookCopies = [];
+        let members = [];
+        let memberPhones = [];
+        let staff = [];
+        let borrowTransactions = [];
+        let fines = [];
+        let reservations = [];
+
+        // Seed Definitions
+        const SEED_CATEGORIES = [
+            { CategoryID: 1, CategoryName: 'Fiction', Description: 'Novels, short stories, and imaginative narratives' },
+            { CategoryID: 2, CategoryName: 'Non-Fiction', Description: 'Factual books based on real events or topics' },
+            { CategoryID: 3, CategoryName: 'Science', Description: 'Physics, Biology, Chemistry, and related fields' },
+            { CategoryID: 4, CategoryName: 'Technology', Description: 'Computing, networking, AI, and software engineering' },
+            { CategoryID: 5, CategoryName: 'History', Description: 'Historical accounts and biographies' },
+            { CategoryID: 6, CategoryName: 'Mathematics', Description: 'Pure and applied mathematics' },
+            { CategoryID: 7, CategoryName: 'Literature', Description: 'Classic and modern literary works' },
+            { CategoryID: 8, CategoryName: 'Self-Help', Description: 'Personal development and motivational books' },
+            { CategoryID: 9, CategoryName: 'Business', Description: 'Entrepreneurship, management, and economics' },
+            { CategoryID: 10, CategoryName: 'Philosophy', Description: 'Philosophical thought and ethics' }
+        ];
+
+        const SEED_BOOKS = [
+            { BookID: 1, ISBN: '978-0061965784', Title: 'Brave New World', PublicationYear: 1932, Publisher: 'Harper Perennial', CategoryID: 1, TotalCopies: 5, AvailableCopies: 3 },
+            { BookID: 2, ISBN: '978-0743273565', Title: 'The Great Gatsby', PublicationYear: 1925, Publisher: 'Scribner', CategoryID: 7, TotalCopies: 4, AvailableCopies: 2 },
+            { BookID: 3, ISBN: '978-0307474278', Title: 'The Da Vinci Code', PublicationYear: 2003, Publisher: 'Anchor Books', CategoryID: 1, TotalCopies: 6, AvailableCopies: 4 },
+            { BookID: 4, ISBN: '978-0201616224', Title: 'The Pragmatic Programmer', PublicationYear: 1999, Publisher: 'Addison-Wesley', CategoryID: 4, TotalCopies: 3, AvailableCopies: 1 },
+            { BookID: 5, ISBN: '978-0132350884', Title: 'Clean Code', PublicationYear: 2008, Publisher: 'Prentice Hall', CategoryID: 4, TotalCopies: 4, AvailableCopies: 2 },
+            { BookID: 6, ISBN: '978-0385737951', Title: 'The Hunger Games', PublicationYear: 2008, Publisher: 'Scholastic', CategoryID: 1, TotalCopies: 7, AvailableCopies: 5 },
+            { BookID: 7, ISBN: '978-0393356250', Title: 'Sapiens', PublicationYear: 2011, Publisher: 'Harper Collins', CategoryID: 5, TotalCopies: 5, AvailableCopies: 3 },
+            { BookID: 8, ISBN: '978-0674034624', Title: 'The Elements of Statistical Learning', PublicationYear: 2001, Publisher: 'Springer', CategoryID: 3, TotalCopies: 2, AvailableCopies: 1 },
+            { BookID: 9, ISBN: '978-0062316097', Title: 'The Alchemist', PublicationYear: 1988, Publisher: 'HarperOne', CategoryID: 8, TotalCopies: 6, AvailableCopies: 4 },
+            { BookID: 10, ISBN: '978-1501156700', Title: 'It Ends with Us', PublicationYear: 2016, Publisher: 'Atria Books', CategoryID: 1, TotalCopies: 5, AvailableCopies: 3 },
+            { BookID: 11, ISBN: '978-0521880688', Title: 'Introduction to Algorithms', PublicationYear: 2009, Publisher: 'MIT Press', CategoryID: 6, TotalCopies: 3, AvailableCopies: 0 },
+            { BookID: 12, ISBN: '978-0316769174', Title: 'The Catcher in the Rye', PublicationYear: 1951, Publisher: 'Little Brown', CategoryID: 7, TotalCopies: 4, AvailableCopies: 2 },
+            { BookID: 13, ISBN: '978-0393351590', Title: 'Thinking Fast and Slow', PublicationYear: 2011, Publisher: 'Farrar Straus', CategoryID: 8, TotalCopies: 4, AvailableCopies: 3 },
+            { BookID: 14, ISBN: '978-1501175466', Title: 'Educated', PublicationYear: 2018, Publisher: 'Random House', CategoryID: 2, TotalCopies: 5, AvailableCopies: 4 },
+            { BookID: 15, ISBN: '978-0062641540', Title: 'Shoe Dog', PublicationYear: 2016, Publisher: 'Scribner', CategoryID: 9, TotalCopies: 3, AvailableCopies: 2 },
+            { BookID: 16, ISBN: '978-0374533557', Title: 'Meditations', PublicationYear: 1900, Publisher: 'Farrar Straus', CategoryID: 10, TotalCopies: 4, AvailableCopies: 3 },
+            { BookID: 17, ISBN: '978-0385490818', Title: '1984', PublicationYear: 1949, Publisher: 'Secker Warburg', CategoryID: 1, TotalCopies: 6, AvailableCopies: 2 },
+            { BookID: 18, ISBN: '978-0198526636', Title: 'A Brief History of Time', PublicationYear: 1988, Publisher: 'Bantam Books', CategoryID: 3, TotalCopies: 5, AvailableCopies: 3 },
+            { BookID: 19, ISBN: '978-0735224292', Title: 'Little Fires Everywhere', PublicationYear: 2017, Publisher: 'Penguin Press', CategoryID: 1, TotalCopies: 4, AvailableCopies: 2 },
+            { BookID: 20, ISBN: '978-0735211292', Title: 'The Silent Patient', PublicationYear: 2019, Publisher: 'Celadon Books', CategoryID: 1, TotalCopies: 5, AvailableCopies: 3 }
+        ];
+
+        const SEED_AUTHORS = [
+            { AuthorID: 1, FirstName: 'Aldous', LastName: 'Huxley', Nationality: 'British', BirthYear: 1894 },
+            { AuthorID: 2, FirstName: 'F. Scott', LastName: 'Fitzgerald', Nationality: 'American', BirthYear: 1896 },
+            { AuthorID: 3, FirstName: 'Dan', LastName: 'Brown', Nationality: 'American', BirthYear: 1964 },
+            { AuthorID: 4, FirstName: 'Andrew', LastName: 'Hunt', Nationality: 'American', BirthYear: 1964 },
+            { AuthorID: 5, FirstName: 'Robert', LastName: 'Martin', Nationality: 'American', BirthYear: 1952 },
+            { AuthorID: 6, FirstName: 'Suzanne', LastName: 'Collins', Nationality: 'American', BirthYear: 1962 },
+            { AuthorID: 7, FirstName: 'Yuval', LastName: 'Harari', Nationality: 'Israeli', BirthYear: 1976 },
+            { AuthorID: 8, FirstName: 'Paulo', LastName: 'Coelho', Nationality: 'Brazilian', BirthYear: 1947 },
+            { AuthorID: 9, FirstName: 'Colleen', LastName: 'Hoover', Nationality: 'American', BirthYear: 1979 },
+            { AuthorID: 10, FirstName: 'Thomas', 'LastName': 'Cormen', Nationality: 'American', BirthYear: 1956 },
+            { AuthorID: 11, FirstName: 'J.D.', LastName: 'Salinger', Nationality: 'American', BirthYear: 1919 },
+            { AuthorID: 12, FirstName: 'Daniel', LastName: 'Kahneman', Nationality: 'Israeli', BirthYear: 1934 },
+            { AuthorID: 13, FirstName: 'Tara', LastName: 'Westover', Nationality: 'American', BirthYear: 1986 },
+            { AuthorID: 14, FirstName: 'Phil', LastName: 'Knight', Nationality: 'American', BirthYear: 1938 },
+            { AuthorID: 15, FirstName: 'Marcus', LastName: 'Aurelius', Nationality: 'Roman', BirthYear: 1901 },
+            { AuthorID: 16, FirstName: 'George', LastName: 'Orwell', Nationality: 'British', BirthYear: 1903 },
+            { AuthorID: 17, FirstName: 'Stephen', LastName: 'Hawking', Nationality: 'British', BirthYear: 1942 },
+            { AuthorID: 18, FirstName: 'Celeste', LastName: 'Ng', Nationality: 'American', BirthYear: 1980 },
+            { AuthorID: 19, FirstName: 'Alex', LastName: 'Michaelides', Nationality: 'British', BirthYear: 1977 },
+            { AuthorID: 20, FirstName: 'Hasib', LastName: 'Leiserson', Nationality: 'American', BirthYear: 1960 }
+        ];
+
+        const SEED_BOOK_AUTHORS = [
+            { BookID: 1, AuthorID: 1 }, { BookID: 2, AuthorID: 2 }, { BookID: 3, AuthorID: 3 }, { BookID: 4, AuthorID: 4 },
+            { BookID: 5, AuthorID: 5 }, { BookID: 6, AuthorID: 6 }, { BookID: 7, AuthorID: 7 }, { BookID: 8, AuthorID: 10 },
+            { BookID: 8, AuthorID: 20 }, { BookID: 9, AuthorID: 8 }, { BookID: 10, AuthorID: 9 }, { BookID: 11, AuthorID: 10 },
+            { BookID: 12, AuthorID: 11 }, { BookID: 13, AuthorID: 12 }, { BookID: 14, AuthorID: 13 }, { BookID: 15, AuthorID: 14 },
+            { BookID: 16, AuthorID: 15 }, { BookID: 17, AuthorID: 16 }, { BookID: 18, AuthorID: 17 }, { BookID: 19, AuthorID: 18 },
+            { BookID: 20, AuthorID: 19 }
+        ];
+
+        const SEED_BOOK_COPIES = [
+            { CopyID: 1, BookID: 1, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2021-03-10' },
+            { CopyID: 2, BookID: 1, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2021-03-10' },
+            { CopyID: 3, BookID: 1, Condition: 'Fair', IsAvailable: 0, AcquiredDate: '2020-01-15' },
+            { CopyID: 4, BookID: 2, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2020-06-20' },
+            { CopyID: 5, BookID: 2, Condition: 'Fair', IsAvailable: 0, AcquiredDate: '2021-07-01' },
+            { CopyID: 6, BookID: 3, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2022-01-05' },
+            { CopyID: 7, BookID: 3, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2022-01-05' },
+            { CopyID: 8, BookID: 3, Condition: 'Good', IsAvailable: 0, AcquiredDate: '2022-01-05' },
+            { CopyID: 9, BookID: 4, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2019-11-11' },
+            { CopyID: 10, BookID: 4, Condition: 'Damaged', IsAvailable: 0, AcquiredDate: '2018-08-08' },
+            { CopyID: 11, BookID: 5, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2020-05-01' },
+            { CopyID: 12, BookID: 5, Condition: 'Fair', IsAvailable: 0, AcquiredDate: '2020-05-01' },
+            { CopyID: 13, BookID: 6, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2021-09-15' },
+            { CopyID: 14, BookID: 6, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2021-09-15' },
+            { CopyID: 15, BookID: 6, Condition: 'Good', IsAvailable: 0, AcquiredDate: '2021-09-15' },
+            { CopyID: 16, BookID: 7, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2022-03-20' },
+            { CopyID: 17, BookID: 7, Condition: 'Good', IsAvailable: 0, AcquiredDate: '2022-03-20' },
+            { CopyID: 18, BookID: 11, Condition: 'Good', IsAvailable: 0, AcquiredDate: '2020-12-25' },
+            { CopyID: 19, BookID: 17, Condition: 'Good', IsAvailable: 1, AcquiredDate: '2019-06-01' },
+            { CopyID: 20, BookID: 17, Condition: 'Fair', IsAvailable: 0, AcquiredDate: '2019-06-01' }
+        ];
+
+        const SEED_MEMBERS = [
+            { MemberID: 1, CardNumber: 'LIB-001', FullName: 'Ahmed Khan', Email: 'ahmed.khan@gmail.com', Street: 'Street 5', City: 'Islamabad', ZipCode: '44000', MembershipType: 'Premium', JoinDate: '2022-01-10', IsActive: 1 },
+            { MemberID: 2, CardNumber: 'LIB-002', FullName: 'Sara Ali', Email: 'sara.ali@yahoo.com', Street: 'Block B', City: 'Rawalpindi', ZipCode: '46000', MembershipType: 'Standard', JoinDate: '2022-03-15', IsActive: 1 },
+            { MemberID: 3, CardNumber: 'LIB-003', FullName: 'Bilal Nawaz', Email: 'bilal.nawaz@hotmail.com', Street: 'Sector G-9', City: 'Islamabad', ZipCode: '44090', MembershipType: 'Standard', JoinDate: '2021-07-20', IsActive: 1 },
+            { MemberID: 4, CardNumber: 'LIB-004', FullName: 'Fatima Malik', Email: 'fatima.m@gmail.com', Street: 'Model Town', City: 'Lahore', ZipCode: '54000', MembershipType: 'Premium', JoinDate: '2023-02-01', IsActive: 1 },
+            { MemberID: 5, CardNumber: 'LIB-005', FullName: 'Usman Raza', Email: 'usman.raza@gmail.com', Street: 'DHA Phase 2', City: 'Karachi', ZipCode: '75500', MembershipType: 'Standard', JoinDate: '2020-11-05', IsActive: 1 },
+            { MemberID: 6, CardNumber: 'LIB-006', FullName: 'Zara Hussain', Email: 'zara.h@outlook.com', Street: 'F-7 Markaz', City: 'Islamabad', ZipCode: '44000', MembershipType: 'Premium', JoinDate: '2022-05-22', IsActive: 1 },
+            { MemberID: 7, CardNumber: 'LIB-007', FullName: 'Hamid Sheikh', Email: 'hamid.sh@gmail.com', Street: 'Gulshan-e-Iqbal', City: 'Karachi', ZipCode: '75300', MembershipType: 'Standard', JoinDate: '2023-06-10', IsActive: 1 },
+            { MemberID: 8, CardNumber: 'LIB-008', FullName: 'Nadia Qureshi', Email: 'nadia.q@gmail.com', Street: 'Johar Town', City: 'Lahore', ZipCode: '54600', MembershipType: 'Standard', JoinDate: '2021-12-01', IsActive: 0 },
+            { MemberID: 9, CardNumber: 'LIB-009', FullName: 'Tariq Jamil', Email: 'tariq.jamil@yahoo.com', Street: 'Clifton', City: 'Karachi', ZipCode: '75600', MembershipType: 'Premium', JoinDate: '2020-08-14', IsActive: 1 },
+            { MemberID: 10, CardNumber: 'LIB-010', FullName: 'Ayesha Siddiqui', Email: 'ayesha.s@gmail.com', Street: 'I-8', City: 'Islamabad', ZipCode: '44080', MembershipType: 'Standard', JoinDate: '2022-09-30', IsActive: 1 },
+            { MemberID: 11, CardNumber: 'LIB-011', FullName: 'Kamran Baig', Email: 'kamran.b@gmail.com', Street: 'Gulberg III', City: 'Lahore', ZipCode: '54660', MembershipType: 'Standard', JoinDate: '2023-01-17', IsActive: 1 },
+            { MemberID: 12, CardNumber: 'LIB-012', FullName: 'Hina Afzal', Email: 'hina.a@hotmail.com', Street: 'North Nazimabad', City: 'Karachi', ZipCode: '74700', MembershipType: 'Premium', JoinDate: '2021-04-25', IsActive: 1 },
+            { MemberID: 13, CardNumber: 'LIB-013', FullName: 'Omer Farooq', Email: 'omer.f@gmail.com', Street: 'G-10', City: 'Islamabad', ZipCode: '44100', MembershipType: 'Standard', JoinDate: '2020-06-06', IsActive: 1 },
+            { MemberID: 14, CardNumber: 'LIB-014', FullName: 'Sana Tariq', Email: 'sana.t@yahoo.com', Street: 'Township', City: 'Lahore', ZipCode: '54800', MembershipType: 'Standard', JoinDate: '2022-11-11', IsActive: 1 },
+            { MemberID: 15, CardNumber: 'LIB-015', FullName: 'Asad Mehmood', Email: 'asad.m@gmail.com', Street: 'Malir', City: 'Karachi', ZipCode: '75080', MembershipType: 'Premium', JoinDate: '2023-03-28', IsActive: 1 }
+        ];
+
+        const SEED_PHONES = [
+            { PhoneID: 1, MemberID: 1, Phone: '0300-1234567' }, { PhoneID: 2, MemberID: 1, Phone: '0321-9876543' },
+            { PhoneID: 3, MemberID: 2, Phone: '0333-1112222' }, { PhoneID: 4, MemberID: 3, Phone: '0311-3334444' },
+            { PhoneID: 5, MemberID: 4, Phone: '0345-5556666' }, { PhoneID: 6, MemberID: 4, Phone: '0321-7778888' },
+            { PhoneID: 7, MemberID: 5, Phone: '0301-9990000' }, { PhoneID: 8, MemberID: 6, Phone: '0322-1231231' },
+            { PhoneID: 9, MemberID: 7, Phone: '0312-4564564' }, { PhoneID: 10, MemberID: 8, Phone: '0315-7897897' },
+            { PhoneID: 11, MemberID: 9, Phone: '0346-1010101' }, { PhoneID: 12, MemberID: 10, Phone: '0303-2020202' },
+            { PhoneID: 13, MemberID: 11, Phone: '0344-3030303' }, { PhoneID: 14, MemberID: 12, Phone: '0308-4040404' },
+            { PhoneID: 15, MemberID: 13, Phone: '0319-5050505' }, { PhoneID: 16, MemberID: 14, Phone: '0329-6060606' },
+            { PhoneID: 17, MemberID: 15, Phone: '0302-7070707' }
+        ];
+
+        const SEED_STAFF = [
+            { StaffID: 1, FullName: 'Akber ALi', Email: 'imran.shah@library.edu.pk', HireDate: '2018-01-15', Salary: 75000.00, StaffType: 'Librarian', Specialization: 'Digital Resources' },
+            { StaffID: 2, FullName: 'Ms. Rabia Noor', Email: 'rabia.noor@library.edu.pk', HireDate: '2019-06-01', Salary: 45000.00, StaffType: 'Assistant', ShiftTime: 'Morning' },
+            { StaffID: 3, FullName: 'Mr. Faisal Khan', Email: 'faisal.k@library.edu.pk', HireDate: '2020-03-10', Salary: 80000.00, StaffType: 'Admin', AccessLevel: 'Level3' },
+            { StaffID: 4, FullName: 'Mrs. Amna Riaz', Email: 'amna.r@library.edu.pk', HireDate: '2021-08-20', Salary: 70000.00, StaffType: 'Librarian', Specialization: 'Archiving' },
+            { StaffID: 5, FullName: 'Mr. Rizwan Butt', Email: 'rizwan.b@library.edu.pk', HireDate: '2022-02-14', Salary: 42000.00, StaffType: 'Assistant', ShiftTime: 'Evening' },
+            { StaffID: 6, FullName: 'Ms. Sobia Akhtar', Email: 'sobia.a@library.edu.pk', HireDate: '2017-11-30', Salary: 48000.00, StaffType: 'Assistant', ShiftTime: 'Night' },
+            { StaffID: 7, FullName: 'Mr. Asif Raza', Email: 'asif.r@library.edu.pk', HireDate: '2016-05-05', Salary: 90000.00, StaffType: 'Admin', AccessLevel: 'Level3' },
+            { StaffID: 8, FullName: 'Dr. Nadia Islam', Email: 'nadia.i@library.edu.pk', HireDate: '2023-01-10', Salary: 68000.00, StaffType: 'Librarian', Specialization: 'Cataloguing' },
+            { StaffID: 9, FullName: 'Mr. Junaid Ali', Email: 'junaid.a@library.edu.pk', HireDate: '2022-09-25', Salary: 44000.00, StaffType: 'Assistant', ShiftTime: 'Morning' },
+            { StaffID: 10, FullName: 'Ms. Bushra Khan', Email: 'bushra.k@library.edu.pk', HireDate: '2015-03-20', Salary: 95000.00, StaffType: 'Admin', AccessLevel: 'Level2' }
+        ];
+
+        const SEED_BORROWS = [
+            { TransactionID: 1, MemberID: 1, CopyID: 3, BorrowDate: '2024-01-10', DueDate: '2024-01-24', ReturnDate: '2024-01-22', Status: 'Returned' },
+            { TransactionID: 2, MemberID: 2, CopyID: 5, BorrowDate: '2024-02-01', DueDate: '2024-02-15', ReturnDate: null, Status: 'Overdue' },
+            { TransactionID: 3, MemberID: 3, CopyID: 10, BorrowDate: '2024-02-20', DueDate: '2024-03-06', ReturnDate: '2024-03-10', Status: 'Returned' },
+            { TransactionID: 4, MemberID: 4, CopyID: 12, BorrowDate: '2024-03-01', DueDate: '2024-03-15', ReturnDate: null, Status: 'Active' },
+            { TransactionID: 5, MemberID: 5, CopyID: 18, BorrowDate: '2024-03-05', DueDate: '2024-03-19', ReturnDate: '2024-03-19', Status: 'Returned' },
+            { TransactionID: 6, MemberID: 6, CopyID: 8, BorrowDate: '2024-03-12', DueDate: '2024-03-26', ReturnDate: null, Status: 'Overdue' },
+            { TransactionID: 7, MemberID: 7, CopyID: 2, BorrowDate: '2024-04-01', DueDate: '2024-04-15', ReturnDate: '2024-04-13', Status: 'Returned' },
+            { TransactionID: 8, MemberID: 8, CopyID: 20, BorrowDate: '2024-04-10', DueDate: '2024-04-24', ReturnDate: null, Status: 'Active' },
+            { TransactionID: 9, MemberID: 9, CopyID: 15, BorrowDate: '2024-04-15', DueDate: '2024-04-29', ReturnDate: '2024-05-05', Status: 'Returned' },
+            { TransactionID: 10, MemberID: 10, CopyID: 7, BorrowDate: '2024-05-01', DueDate: '2024-05-15', ReturnDate: null, Status: 'Overdue' },
+            { TransactionID: 11, MemberID: 11, CopyID: 4, BorrowDate: '2024-05-10', DueDate: '2024-05-24', ReturnDate: '2024-05-23', Status: 'Returned' },
+            { TransactionID: 12, MemberID: 12, CopyID: 11, BorrowDate: '2024-05-20', DueDate: '2024-06-03', ReturnDate: null, Status: 'Active' },
+            { TransactionID: 13, MemberID: 13, CopyID: 19, BorrowDate: '2024-06-01', DueDate: '2024-06-15', ReturnDate: '2024-06-14', Status: 'Returned' },
+            { TransactionID: 14, MemberID: 14, CopyID: 6, BorrowDate: '2024-06-05', DueDate: '2024-06-19', ReturnDate: null, Status: 'Active' },
+            { TransactionID: 15, MemberID: 15, CopyID: 9, BorrowDate: '2024-06-10', DueDate: '2024-06-24', ReturnDate: '2024-06-30', Status: 'Returned' },
+            { TransactionID: 16, MemberID: 1, CopyID: 13, BorrowDate: '2024-07-01', DueDate: '2024-07-15', ReturnDate: null, Status: 'Active' },
+            { TransactionID: 17, MemberID: 2, CopyID: 16, BorrowDate: '2024-07-05', DueDate: '2024-07-19', ReturnDate: '2024-07-18', Status: 'Returned' },
+            { TransactionID: 18, MemberID: 3, CopyID: 1, BorrowDate: '2024-07-10', DueDate: '2024-07-24', ReturnDate: null, Status: 'Overdue' },
+            { TransactionID: 19, MemberID: 4, CopyID: 17, BorrowDate: '2024-07-20', DueDate: '2024-08-03', ReturnDate: '2024-08-02', Status: 'Returned' },
+            { TransactionID: 20, MemberID: 5, CopyID: 14, BorrowDate: '2024-08-01', DueDate: '2024-08-15', ReturnDate: null, Status: 'Active' }
+        ];
+
+        const SEED_FINES = [
+            { FineID: 1, TransactionID: 2, Amount: 140.00, PaidStatus: 1, PaidDate: '2024-04-01' },
+            { FineID: 2, TransactionID: 3, Amount: 40.00, PaidStatus: 1, PaidDate: '2024-03-20' },
+            { FineID: 3, TransactionID: 6, Amount: 210.00, PaidStatus: 0, PaidDate: null },
+            { FineID: 4, TransactionID: 9, Amount: 60.00, PaidStatus: 1, PaidDate: '2024-05-10' },
+            { FineID: 5, TransactionID: 10, Amount: 180.00, PaidStatus: 0, PaidDate: null },
+            { FineID: 6, TransactionID: 15, Amount: 60.00, PaidStatus: 1, PaidDate: '2024-07-05' },
+            { FineID: 7, TransactionID: 18, Amount: 150.00, PaidStatus: 0, PaidDate: null }
+        ];
+
+        const SEED_RESERVATIONS = [
+            { ReservationID: 1, MemberID: 1, BookID: 11, ReservationDate: '2024-06-01', ExpiryDate: '2024-06-15', Status: 'Pending' },
+            { ReservationID: 2, MemberID: 2, BookID: 5, ReservationDate: '2024-05-10', ExpiryDate: '2024-05-24', Status: 'Fulfilled' },
+            { ReservationID: 3, MemberID: 3, BookID: 17, ReservationDate: '2024-06-20', ExpiryDate: '2024-07-04', Status: 'Pending' },
+            { ReservationID: 4, MemberID: 4, BookID: 3, ReservationDate: '2024-07-01', ExpiryDate: '2024-07-15', Status: 'Cancelled' },
+            { ReservationID: 5, MemberID: 5, BookID: 8, ReservationDate: '2024-07-10', ExpiryDate: '2024-07-24', Status: 'Pending' },
+            { ReservationID: 6, MemberID: 6, BookID: 11, ReservationDate: '2024-07-15', ExpiryDate: '2024-07-29', Status: 'Pending' },
+            { ReservationID: 7, MemberID: 7, BookID: 13, ReservationDate: '2024-08-01', ExpiryDate: '2024-08-15', Status: 'Fulfilled' },
+            { ReservationID: 8, MemberID: 8, BookID: 1, ReservationDate: '2024-08-05', ExpiryDate: '2024-08-19', Status: 'Pending' },
+            { ReservationID: 9, MemberID: 9, BookID: 6, ReservationDate: '2024-08-10', ExpiryDate: '2024-08-24', Status: 'Cancelled' },
+            { ReservationID: 10, MemberID: 10, BookID: 20, ReservationDate: '2024-08-15', ExpiryDate: '2024-08-29', Status: 'Pending' },
+            { ReservationID: 11, MemberID: 11, BookID: 4, ReservationDate: '2024-08-20', ExpiryDate: '2024-09-03', Status: 'Fulfilled' },
+            { ReservationID: 12, MemberID: 12, BookID: 15, ReservationDate: '2024-09-01', ExpiryDate: '2024-09-15', Status: 'Pending' },
+            { ReservationID: 13, MemberID: 13, BookID: 9, ReservationDate: '2024-09-05', ExpiryDate: '2024-09-19', Status: 'Pending' },
+            { ReservationID: 14, MemberID: 14, BookID: 12, ReservationDate: '2024-09-10', ExpiryDate: '2024-09-24', Status: 'Cancelled' },
+            { ReservationID: 15, MemberID: 15, BookID: 7, ReservationDate: '2024-09-15', ExpiryDate: '2024-09-29', Status: 'Pending' }
+        ];
+
+        // System Logs History Array
+        let systemLogs = [
+            { text: "System hydrated and compiled successfully with LibraryDB schema.", time: "Just now", type: "system" },
+            { text: "Dr. Imran Shah initialized administrative session.", time: "Just now", type: "user" }
+        ];
+
+        // Active State Tracking for View Modals
+        let selectedBookIDForCopies = null;
+
+        // LOAD DATA FUNCTION
+        function initDatabase() {
+            if (localStorage.getItem("librarydb_hydrated") === "true") {
+                categories = JSON.parse(localStorage.getItem("categories"));
+                books = JSON.parse(localStorage.getItem("books"));
+                authors = JSON.parse(localStorage.getItem("authors"));
+                bookAuthors = JSON.parse(localStorage.getItem("bookAuthors"));
+                bookCopies = JSON.parse(localStorage.getItem("bookCopies"));
+                members = JSON.parse(localStorage.getItem("members"));
+                memberPhones = JSON.parse(localStorage.getItem("memberPhones"));
+                staff = JSON.parse(localStorage.getItem("staff"));
+                borrowTransactions = JSON.parse(localStorage.getItem("borrowTransactions"));
+                fines = JSON.parse(localStorage.getItem("fines"));
+                reservations = JSON.parse(localStorage.getItem("reservations"));
+                if (localStorage.getItem("system_logs")) {
+                    systemLogs = JSON.parse(localStorage.getItem("system_logs"));
+                }
+            } else {
+                restoreToSeedState();
+            }
+        }
+
+        function restoreToSeedState() {
+            categories = JSON.parse(JSON.stringify(SEED_CATEGORIES));
+            books = JSON.parse(JSON.stringify(SEED_BOOKS));
+            authors = JSON.parse(JSON.stringify(SEED_AUTHORS));
+            bookAuthors = JSON.parse(JSON.stringify(SEED_BOOK_AUTHORS));
+            bookCopies = JSON.parse(JSON.stringify(SEED_BOOK_COPIES));
+            members = JSON.parse(JSON.stringify(SEED_MEMBERS));
+            memberPhones = JSON.parse(JSON.stringify(SEED_PHONES));
+            staff = JSON.parse(JSON.stringify(SEED_STAFF));
+            borrowTransactions = JSON.parse(JSON.stringify(SEED_BORROWS));
+            fines = JSON.parse(JSON.stringify(SEED_FINES));
+            reservations = JSON.parse(JSON.stringify(SEED_RESERVATIONS));
+            systemLogs = [
+                { text: "Database reverted to original seed SQL parameters.", time: "Just now", type: "system" },
+                { text: "All transactional test cases fully restored.", time: "Just now", type: "system" }
+            ];
+            saveStateToLocalStorage();
+        }
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem("librarydb_hydrated", "true");
+            localStorage.setItem("categories", JSON.stringify(categories));
+            localStorage.setItem("books", JSON.stringify(books));
+            localStorage.setItem("authors", JSON.stringify(authors));
+            localStorage.setItem("bookAuthors", JSON.stringify(bookAuthors));
+            localStorage.setItem("bookCopies", JSON.stringify(bookCopies));
+            localStorage.setItem("members", JSON.stringify(members));
+            localStorage.setItem("memberPhones", JSON.stringify(memberPhones));
+            localStorage.setItem("staff", JSON.stringify(staff));
+            localStorage.setItem("borrowTransactions", JSON.stringify(borrowTransactions));
+            localStorage.setItem("fines", JSON.stringify(fines));
+            localStorage.setItem("reservations", JSON.stringify(reservations));
+            localStorage.setItem("system_logs", JSON.stringify(systemLogs));
+        }
+
+        // RESET ACTION
+        function resetToSeed() {
+            restoreToSeedState();
+            pushSystemLog("Reinitialized database to original NUTECH CS160 SQL script seed records", "system");
+            showToast("Database Restored", "All tables reverted back to original SQL statements.", "indigo");
+            renderAllViews();
+        }
+
+        // RENDER CENTRAL ROUTER
+        function renderAllViews() {
+            renderDashboardStats();
+            renderCategoryBarChart();
+            renderSystemLogs();
+            renderBookCopyBubbles();
+            renderCatalog();
+            renderMembers();
+            renderStaff();
+            renderTransactions();
+            renderFines();
+            renderReservations();
+            populateFormsDropdowns();
+        }
+
+        // TAB SWITCHER
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('active', 'bg-indigo-600', 'text-white');
+                el.classList.add('text-slate-400', 'hover:bg-slate-800');
+            });
+
+            // Set active
+            const activePane = document.getElementById('tab-' + tabId);
+            if (activePane) activePane.classList.remove('hidden');
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'bg-indigo-600', 'text-white');
+                activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800');
+            }
+
+            // Mobile menu collapse
+            document.getElementById('sidebar-nav').classList.add('hidden', 'lg:flex');
+
+            // Header title updates
+            const titles = {
+                dashboard: "Administrative Operations & Metrics",
+                catalog: "Books Catalogue & Weak-Entity Copies Management",
+                members: "Library Membership Registry & Staff Supertype Hierarchies",
+                circulation: "Borrow Transaction Check-outs & Circulation Console",
+                fines: "Fines & Reserve Hold Waitlists",
+                sql: "CS160 SQL Playground Console"
+            };
+            document.getElementById('view-title').innerText = titles[tabId] || "Library Management System";
+        }
+
+        // HELPER LOGGERS & TOAST SYSTEM
+        function pushSystemLog(message, type) {
+            systemLogs.unshift({ text: message, time: "Just now", type: type });
+            if (systemLogs.length > 50) systemLogs.pop();
+            saveStateToLocalStorage();
+            renderSystemLogs();
+        }
+
+        function showToast(title, desc, theme = 'indigo') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const tTitle = document.getElementById('toast-title');
+            const tDesc = document.getElementById('toast-desc');
+
+            toast.className = `fixed top-5 right-5 z-50 transform transition-transform duration-300 ease-in-out max-w-sm w-full bg-white shadow-2xl rounded-xl border-l-4 p-4 flex items-start gap-3 border-l-${theme === 'red' ? 'red-500' : theme === 'green' ? 'green-500' : 'indigo-500'}`;
+            icon.innerHTML = theme === 'red' ? '⚠️' : theme === 'green' ? '✅' : 'ℹ️';
+            tTitle.innerText = title;
+            tDesc.innerText = desc;
+
+            toast.classList.remove('translate-y-[-150%]');
+            setTimeout(() => {
+                hideToast();
+            }, 4500);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.add('translate-y-[-150%]');
+        }
+
+        // ========================== RENDERS & CALCULATIONS ==========================
+
+        // DASHBOARD STATS
+        function renderDashboardStats() {
+            // Stat 1: Books
+            document.getElementById('stat-total-books').innerText = books.length;
+            // Stat 2: Active Borrows
+            const activeBorrows = borrowTransactions.filter(bt => bt.Status === 'Active' || bt.Status === 'Overdue').length;
+            document.getElementById('stat-active-borrows').innerText = activeBorrows;
+            // Stat 3: Fines
+            const unpaidFines = fines.filter(f => f.PaidStatus === 0);
+            const totalUnpaidFines = unpaidFines.reduce((sum, f) => sum + f.Amount, 0);
+            document.getElementById('stat-unpaid-fines').innerText = `PKR ${totalUnpaidFines.toLocaleString()}`;
+            document.getElementById('stat-unpaid-count').innerText = `${unpaidFines.length} pending fines`;
+            // Stat 4: Pending Reserves
+            const pendingReserves = reservations.filter(r => r.Status === 'Pending').length;
+            document.getElementById('stat-reservations').innerText = pendingReserves;
+        }
+
+        // CATEGORY GRAPH BAR CHART INSIDE DASHBOARD
+        function renderCategoryBarChart() {
+            const chartDiv = document.getElementById('category-bar-chart');
+            chartDiv.innerHTML = '';
+
+            // Calculate books count per category
+            categories.forEach(cat => {
+                const catBooks = books.filter(b => b.CategoryID === cat.CategoryID);
+                const bookCount = catBooks.length;
+                const totalStock = catBooks.reduce((acc, b) => acc + b.TotalCopies, 0);
+                const maxVal = Math.max(...categories.map(c => books.filter(b => b.CategoryID === c.CategoryID).reduce((acc, b) => acc + b.TotalCopies, 0)), 1);
+                
+                const percent = (totalStock / maxVal) * 100;
+
+                chartDiv.innerHTML += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-semibold text-slate-700">
+                            <span>${cat.CategoryName}</span>
+                            <span class="text-slate-500">${bookCount} titles / ${totalStock} copies</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-3 flex overflow-hidden">
+                            <div class="bg-indigo-600 rounded-full h-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // RECENT SYSTEM ACTIVITY LOGS RENDERER
+        function renderSystemLogs() {
+            const container = document.getElementById('activity-logs');
+            container.innerHTML = '';
+            
+            systemLogs.forEach(log => {
+                let badgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+                if (log.type === "system") badgeColor = "bg-red-50 text-red-700 border-red-100";
+                if (log.type === "checkout") badgeColor = "bg-indigo-50 text-indigo-700 border-indigo-100";
+                if (log.type === "fine") badgeColor = "bg-rose-50 text-rose-700 border-rose-100";
+                if (log.type === "return") badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+
+                container.innerHTML += `
+                    <div class="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 text-xs">
+                        <span class="p-1.5 rounded border ${badgeColor} shrink-0 text-[10px] uppercase font-bold tracking-wider">${log.type}</span>
+                        <div class="flex-1">
+                            <p class="text-slate-700 font-medium">${log.text}</p>
+                            <span class="text-[10px] text-slate-400 mt-1 block">${log.time}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // PHYSICAL COPIES BUBBLE GRID
+        function renderBookCopyBubbles() {
+            const container = document.getElementById('copy-grid-tracker');
+            container.innerHTML = '';
+
+            bookCopies.forEach(copy => {
+                let statusBg = "bg-emerald-500 text-white";
+                let title = `Copy ID: ${copy.CopyID} - Good, Available`;
+                if (!copy.IsAvailable) {
+                    statusBg = "bg-red-500 text-white";
+                    title = `Copy ID: ${copy.CopyID} - Out / Issued`;
+                } else if (copy.Condition === 'Fair') {
+                    statusBg = "bg-amber-400 text-white";
+                    title = `Copy ID: ${copy.CopyID} - Fair Condition`;
+                } else if (copy.Condition === 'Damaged') {
+                    statusBg = "bg-red-700 text-white";
+                    title = `Copy ID: ${copy.CopyID} - Damaged State`;
+                }
+
+                container.innerHTML += `
+                    <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center shadow-sm cursor-pointer hover:scale-105 transition" onclick="viewPhysicalCopiesForBookByCopyID(${copy.BookID})" title="${title}">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">COPYID</span>
+                        <span class="text-xs font-black text-slate-800">${copy.CopyID}</span>
+                        <div class="w-2.5 h-2.5 rounded-full mt-2 ${statusBg}"></div>
+                    </div>
+                `;
+            });
+        }
+
+        // ========================== CATALOG PAGE ==========================
+        function renderCatalog() {
+            const tbody = document.getElementById('catalog-table-body');
+            tbody.innerHTML = '';
+
+            const searchVal = document.getElementById('catalog-search').value.toLowerCase();
+            const catFilter = document.getElementById('catalog-filter-category').value;
+
+            books.forEach(b => {
+                const category = categories.find(c => c.CategoryID === b.CategoryID);
+                const categoryName = category ? category.CategoryName : "Undefined";
+
+                // Resolve authors
+                const bAuthorsIds = bookAuthors.filter(ba => ba.BookID === b.BookID).map(ba => ba.AuthorID);
+                const bAuthors = authors.filter(a => bAuthorsIds.includes(a.AuthorID));
+                const authorNames = bAuthors.length > 0 ? bAuthors.map(a => `${a.FirstName} ${a.LastName}`).join(', ') : "Anonymous";
+
+                // Filter & Search checks
+                const matchesSearch = b.Title.toLowerCase().includes(searchVal) || 
+                                      b.ISBN.toLowerCase().includes(searchVal) || 
+                                      authorNames.toLowerCase().includes(searchVal) ||
+                                      b.Publisher.toLowerCase().includes(searchVal);
+
+                const matchesCategory = (catFilter === 'all' || b.CategoryID == catFilter);
+
+                if (matchesSearch && matchesCategory) {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-slate-900 text-sm">${b.Title}</p>
+                                <p class="text-xs text-slate-500 mt-0.5">ISBN: <span class="font-mono text-indigo-600">${b.ISBN}</span> • ${b.Publisher} (${b.PublicationYear})</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 font-semibold text-xs rounded-full">${categoryName}</span>
+                            </td>
+                            <td class="px-6 py-4 text-xs font-medium text-slate-600">
+                                ${authorNames}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold ${b.AvailableCopies > 0 ? 'text-green-600' : 'text-rose-500'}">${b.AvailableCopies} available</span>
+                                    <span class="text-xs text-slate-400">/ ${b.TotalCopies} total</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick="viewPhysicalCopiesForBook(${b.BookID})" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition" title="Manage Physical Copies">
+                                        Copies
+                                    </button>
+                                    <button onclick="deleteBookRecord(${b.BookID})" class="p-1 bg-red-50 hover:bg-red-100 text-red-600 rounded transition" title="Delete Book Record">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // ========================== MEMBERS DIRECTORY ==========================
+        function renderMembers() {
+            const tbody = document.getElementById('members-table-body');
+            tbody.innerHTML = '';
+
+            const searchVal = document.getElementById('member-search').value.toLowerCase();
+
+            members.forEach(m => {
+                const phones = memberPhones.filter(p => p.MemberID === m.MemberID).map(p => p.Phone).join(', ');
+
+                if (m.FullName.toLowerCase().includes(searchVal) || m.CardNumber.toLowerCase().includes(searchVal) || m.Email.toLowerCase().includes(searchVal)) {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50/80 transition text-slate-700">
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-slate-900">${m.FullName}</p>
+                                <p class="text-xs text-indigo-600 font-mono font-semibold">${m.CardNumber}</p>
+                            </td>
+                            <td class="px-6 py-4 text-xs font-semibold">${m.Email}</td>
+                            <td class="px-6 py-4 text-xs text-slate-500 font-medium">${phones || 'No Contact Info'}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 text-xs font-bold rounded ${m.MembershipType === 'Premium' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}">${m.MembershipType}</span>
+                                <span class="text-[10px] block text-slate-400 mt-1">Joined: ${m.JoinDate}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${m.IsActive ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${m.IsActive ? 'bg-green-500' : 'bg-rose-500'}"></span>
+                                    ${m.IsActive ? 'Active' : 'Suspended'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        // ========================== STAFF SUPERTYPE/SUBTYPE ==========================
+        function renderStaff() {
+            const container = document.getElementById('staff-hierarchy-list');
+            container.innerHTML = '';
+
+            staff.forEach(s => {
+                let subtypeMarkup = '';
+                let subtypeBg = '';
+
+                if (s.StaffType === 'Librarian') {
+                    subtypeBg = 'border-l-indigo-600';
+                    subtypeMarkup = `
+                        <div class="mt-2 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-2 py-1 w-fit flex items-center gap-1">
+                            <span>🎓 Specialist:</span>
+                            <span>${s.Specialization || 'General Resources'}</span>
+                        </div>
+                    `;
+                } else if (s.StaffType === 'Assistant') {
+                    subtypeBg = 'border-l-amber-500';
+                    subtypeMarkup = `
+                        <div class="mt-2 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded px-2 py-1 w-fit flex items-center gap-1">
+                            <span>🕒 Shift Duty:</span>
+                            <span>${s.ShiftTime || 'Morning Shift'}</span>
+                        </div>
+                    `;
+                } else if (s.StaffType === 'Admin') {
+                    subtypeBg = 'border-l-rose-500';
+                    subtypeMarkup = `
+                        <div class="mt-2 text-[10px] font-semibold text-rose-800 bg-rose-50 border border-rose-100 rounded px-2 py-1 w-fit flex items-center gap-1">
+                            <span>🔐 Access Cleared:</span>
+                            <span>${s.AccessLevel || 'Level 1'}</span>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML += `
+                    <div class="p-3.5 bg-slate-50 border-l-4 ${subtypeBg} border border-slate-200 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">${s.FullName}</p>
+                                <p class="text-xs text-slate-500">${s.Email}</p>
+                            </div>
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase border border-slate-300 rounded text-slate-500">${s.StaffType}</span>
+                        </div>
+                        <div class="mt-2 flex items-center gap-4 text-[10px] text-slate-400">
+                            <span>Salary: PKR ${s.Salary.toLocaleString()}</span>
+                            <span>Hired: ${s.HireDate}</span>
+                        </div>
+                        ${subtypeMarkup}
+                    </div>
+                `;
+            });
+        }
+
+        // ========================== CIRCULATION & TRANSACTION ENGINE ==========================
+        function renderTransactions() {
+            const tbody = document.getElementById('transactions-table-body');
+            tbody.innerHTML = '';
+
+            const statusFilter = document.getElementById('transaction-status-filter').value;
+
+            borrowTransactions.forEach(bt => {
+                const member = members.find(m => m.MemberID === bt.MemberID);
+                const copy = bookCopies.find(c => c.CopyID === bt.CopyID);
+                const book = copy ? books.find(b => b.BookID === copy.BookID) : null;
+
+                const memberName = member ? member.FullName : "Unknown Member";
+                const cardNum = member ? member.CardNumber : "No Card";
+                const bookTitle = book ? book.Title : "Undefined Title";
+
+                if (statusFilter !== 'all' && bt.Status !== statusFilter) return;
+
+                let statusBadge = '';
+                let returnBtn = '';
+
+                if (bt.Status === 'Returned') {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Returned</span>`;
+                } else if (bt.Status === 'Overdue') {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Overdue</span>`;
+                    returnBtn = `<button onclick="triggerReturnSequence(${bt.TransactionID})" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded transition shadow">Return / Fine</button>`;
+                } else if (bt.Status === 'Active') {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">Active</span>`;
+                    returnBtn = `<button onclick="triggerReturnSequence(${bt.TransactionID})" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded transition shadow">Mark Return</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 text-slate-700">
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-900">${bookTitle}</p>
+                            <p class="text-xs text-slate-400 font-mono">Copy Reference Key: CopyID ${bt.CopyID}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-800 text-xs">${memberName}</p>
+                            <p class="text-[10px] text-indigo-600 font-semibold font-mono">${cardNum}</p>
+                        </td>
+                        <td class="px-6 py-4 text-xs">
+                            <p>Borrow Date: <span class="font-semibold text-slate-600">${bt.BorrowDate}</span></p>
+                            <p class="mt-0.5 text-amber-600">Due Date: <span class="font-semibold">${bt.DueDate}</span></p>
+                            ${bt.ReturnDate ? `<p class="mt-0.5 text-green-600">Returned: <span class="font-semibold">${bt.ReturnDate}</span></p>` : ''}
+                        </td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-right">${returnBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // POPULATE ALL DROPDOWNS ON DATABASE DATA MODIFICATIONS
+        function populateFormsDropdowns() {
+            // Dropdown: Member choices in checkout
+            const checkoutMember = document.getElementById('checkout-member');
+            const resMember = document.getElementById('new-res-member');
+            
+            let memberOpts = '<option value="">-- Choose Member --</option>';
+            members.forEach(m => {
+                if (m.IsActive) {
+                    memberOpts += `<option value="${m.MemberID}">${m.FullName} (${m.CardNumber})</option>`;
+                }
+            });
+            checkoutMember.innerHTML = memberOpts;
+            resMember.innerHTML = memberOpts;
+
+            // Dropdown: Catalog books choice
+            const checkoutBook = document.getElementById('checkout-book');
+            const resBook = document.getElementById('new-res-book');
+            
+            let bookOpts = '<option value="">-- Select Book Title --</option>';
+            books.forEach(b => {
+                bookOpts += `<option value="${b.BookID}">${b.Title} (${b.AvailableCopies} available)</option>`;
+            });
+            checkoutBook.innerHTML = bookOpts;
+            resBook.innerHTML = bookOpts;
+
+            // Dropdown: Categories list in dynamic forms
+            const formCatSelect = document.getElementById('new-book-category');
+            const filterCatSelect = document.getElementById('catalog-filter-category');
+            
+            let catOpts = '';
+            categories.forEach(c => {
+                catOpts += `<option value="${c.CategoryID}">${c.CategoryName}</option>`;
+            });
+            formCatSelect.innerHTML = catOpts;
+            filterCatSelect.innerHTML = `<option value="all">All Categories</option>` + catOpts;
+
+            // Dropdown: Link author in add book form
+            const formAuthorSelect = document.getElementById('new-book-author');
+            let authOpts = '';
+            authors.forEach(a => {
+                authOpts += `<option value="${a.AuthorID}">${a.FirstName} ${a.LastName}</option>`;
+            });
+            formAuthorSelect.innerHTML = authOpts;
+        }
+
+        // LOAD COPIES IN RESPONSE TO SELECT BOOK DROPDOWN
+        function loadBookCopiesForCheckout() {
+            const bookId = document.getElementById('checkout-book').value;
+            const copySelect = document.getElementById('checkout-copy');
+            
+            if (!bookId) {
+                copySelect.innerHTML = '<option value="">-- Select Book First --</option>';
+                return;
+            }
+
+            const copies = bookCopies.filter(c => c.BookID == bookId && c.IsAvailable === 1);
+            let copyOpts = '';
+            copies.forEach(c => {
+                copyOpts += `<option value="${c.CopyID}">Copy ${c.CopyID} (Condition: ${c.Condition})</option>`;
+            });
+
+            if (copies.length === 0) {
+                copySelect.innerHTML = '<option value="">No physical copies available. Must reservation place.</option>';
+            } else {
+                copySelect.innerHTML = copyOpts;
+            }
+        }
+
+        // TRIGGER CHECKOUT TRANSACTION SUBMISSION
+        function executeCheckout(event) {
+            event.preventDefault();
+
+            const mID = parseInt(document.getElementById('checkout-member').value);
+            const bID = parseInt(document.getElementById('checkout-book').value);
+            const cID = parseInt(document.getElementById('checkout-copy').value);
+            const issueDate = document.getElementById('checkout-issue-date').value;
+            const dueDate = document.getElementById('checkout-due-date').value;
+
+            if (!mID || !cID || !issueDate || !dueDate) {
+                showToast("Form Incomplete", "Please completely choose all parameters to trigger transactional checkout.", "red");
+                return;
+            }
+
+            // Constraint checks
+            if (new Date(dueDate) <= new Date(issueDate)) {
+                showToast("Constraint Check Violated", "CHECK failure: Due Date MUST be in the future of Issue Date.", "red");
+                return;
+            }
+
+            const copy = bookCopies.find(c => c.CopyID === cID);
+            if (!copy || !copy.IsAvailable) {
+                showToast("Integrity Violation", "Copy reference ID specified is already currently issued.", "red");
+                return;
+            }
+
+            const book = books.find(b => b.BookID === bID);
+            const member = members.find(m => m.MemberID === mID);
+
+            // ACID simulation step
+            copy.IsAvailable = 0;
+            book.AvailableCopies = Math.max(0, book.AvailableCopies - 1);
+
+            const nextTID = Math.max(...borrowTransactions.map(bt => bt.TransactionID), 0) + 1;
+            borrowTransactions.push({
+                TransactionID: nextTID,
+                MemberID: mID,
+                CopyID: cID,
+                BorrowDate: issueDate,
+                DueDate: dueDate,
+                ReturnDate: null,
+                Status: 'Active'
+            });
+
+            pushSystemLog(`Checked out "${book.Title}" Copy ID ${cID} for member ${member.FullName}.`, "checkout");
+            showToast("Transaction Issued", `Checkout registered with transactional integrity.`, "green");
+            
+            saveStateToLocalStorage();
+            renderAllViews();
+            document.getElementById('checkout-form').reset();
+            document.getElementById('checkout-copy').innerHTML = '';
+        }
+
+        // SIMULATED TRANSACTIONAL RETURN FLOW
+        function triggerReturnSequence(tID) {
+            const bt = borrowTransactions.find(t => t.TransactionID === tID);
+            if (!bt) return;
+
+            const copy = bookCopies.find(c => c.CopyID === bt.CopyID);
+            const book = copy ? books.find(b => b.BookID === copy.BookID) : null;
+            const member = members.find(m => m.MemberID === bt.MemberID);
+
+            // Compute actual date simulated
+            const returnDateStr = new Date().toISOString().split('T')[0];
+
+            // Perform in memory calculations
+            bt.ReturnDate = returnDateStr;
+            bt.Status = 'Returned';
+            
+            if (copy) copy.IsAvailable = 1;
+            if (book) book.AvailableCopies = Math.min(book.TotalCopies, book.AvailableCopies + 1);
+
+            // Evaluate penalty check on overdue statuses
+            const dueTime = new Date(bt.DueDate).getTime();
+            const returnTime = new Date(returnDateStr).getTime();
+            
+            if (returnTime > dueTime) {
+                // Determine days overdue
+                const daysDiff = Math.ceil((returnTime - dueTime) / (1000 * 60 * 60 * 24));
+                const fineAmt = daysDiff * 15; // PKR 15 fine rate per delay
+
+                const nextFineID = Math.max(...fines.map(f => f.FineID), 0) + 1;
+                fines.push({
+                    FineID: nextFineID,
+                    TransactionID: bt.TransactionID,
+                    Amount: fineAmt,
+                    PaidStatus: 0,
+                    PaidDate: null
+                });
+                
+                pushSystemLog(`Return overdue by ${daysDiff} days. Levied a PKR ${fineAmt} Fine (ID: ${nextFineID}) on ${member.FullName}.`, "fine");
+                showToast("Overdue Penalty Logged", `Overdue fine of PKR ${fineAmt} calculated.`, "red");
+            } else {
+                pushSystemLog(`Returned Copy ID ${bt.CopyID} for "${book ? book.Title : 'Title'}" in pristine state.`, "return");
+                showToast("Return Registered", "Book returned within due date safely.", "green");
+            }
+
+            saveStateToLocalStorage();
+            renderAllViews();
+        }
+
+        // ========================== FINES & PAYMENTS CONSOLE ==========================
+        function renderFines() {
+            const tbody = document.getElementById('fines-table-body');
+            tbody.innerHTML = '';
+
+            fines.forEach(f => {
+                const trans = borrowTransactions.find(t => t.TransactionID === f.TransactionID);
+                const member = trans ? members.find(m => m.MemberID === trans.MemberID) : null;
+                const memberName = member ? member.FullName : "Undefined Member";
+
+                let actionBtn = '';
+                let statusLabel = '';
+
+                if (f.PaidStatus) {
+                    statusLabel = `<span class="px-2.5 py-0.5 bg-green-50 text-green-700 font-bold rounded text-xs">Paid on ${f.PaidDate}</span>`;
+                } else {
+                    statusLabel = `<span class="px-2.5 py-0.5 bg-rose-50 text-rose-700 font-bold rounded text-xs">Unpaid Balance</span>`;
+                    actionBtn = `<button onclick="processFinePayment(${f.FineID})" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded transition shadow">Pay Balance</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 text-slate-700">
+                        <td class="px-6 py-4 font-bold font-mono text-xs">FINE-${f.FineID}</td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-800 text-xs">${memberName}</p>
+                            <p class="text-[10px] text-slate-400">Transaction ID reference: bt-${f.TransactionID}</p>
+                        </td>
+                        <td class="px-6 py-4 font-bold text-slate-900 text-xs">PKR ${f.Amount}</td>
+                        <td class="px-6 py-4">${statusLabel}</td>
+                        <td class="px-6 py-4 text-right">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function processFinePayment(fID) {
+            const fine = fines.find(f => f.FineID === fID);
+            if (!fine) return;
+
+            fine.PaidStatus = 1;
+            fine.PaidDate = new Date().toISOString().split('T')[0];
+
+            pushSystemLog(`Fine balance payment of PKR ${fine.Amount} registered for FINE-${fID}.`, "return");
+            showToast("Fine Balance Cleared", "Financial parameters successfully settled.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+        }
+
+        // ========================== HOLD RESERVATIONS ==========================
+        function renderReservations() {
+            const tbody = document.getElementById('reservations-table-body');
+            tbody.innerHTML = '';
+
+            reservations.forEach(r => {
+                const member = members.find(m => m.MemberID === r.MemberID);
+                const book = books.find(b => b.BookID === r.BookID);
+
+                const memberName = member ? member.FullName : "Unknown Member";
+                const bookTitle = book ? book.Title : "Unknown Title";
+
+                let statusBadge = '';
+                let actionBtn = '';
+
+                if (r.Status === 'Pending') {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full">Pending</span>`;
+                    actionBtn = `
+                        <div class="flex items-center justify-end gap-1">
+                            <button onclick="fulfillHold(${r.ReservationID})" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Fulfill Reservation">✓</button>
+                            <button onclick="cancelHold(${r.ReservationID})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Cancel Reservation">&times;</button>
+                        </div>
+                    `;
+                } else if (r.Status === 'Fulfilled') {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-green-50 text-green-700 rounded-full">Fulfilled</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-0.5 text-xs font-semibold bg-slate-100 text-slate-400 rounded-full">Cancelled</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 text-slate-700">
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-800 text-xs">${memberName}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-slate-800 text-xs">${bookTitle}</p>
+                        </td>
+                        <td class="px-6 py-4 text-[11px] text-slate-400 font-medium">
+                            <span>Res: ${r.ReservationDate}</span><br>
+                            <span class="text-amber-600 font-semibold">Exp: ${r.ExpiryDate}</span>
+                        </td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-right">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function fulfillHold(rID) {
+            const res = reservations.find(r => r.ReservationID === rID);
+            if (!res) return;
+
+            const book = books.find(b => b.BookID === res.BookID);
+            if (!book) return;
+
+            // Fulfill hold requires physical copy availability 
+            const availableCopies = bookCopies.filter(c => c.BookID === res.BookID && c.IsAvailable === 1);
+            if (availableCopies.length === 0) {
+                showToast("Fulfillment Error", "No copies of this book are available inside inventory to check out yet.", "red");
+                return;
+            }
+
+            res.Status = 'Fulfilled';
+            
+            // Auto issue checkout sequence for member
+            const copyToIssue = availableCopies[0];
+            copyToIssue.IsAvailable = 0;
+            book.AvailableCopies = Math.max(0, book.AvailableCopies - 1);
+
+            const nextTID = Math.max(...borrowTransactions.map(bt => bt.TransactionID), 0) + 1;
+            const todayStr = new Date().toISOString().split('T')[0];
+            const dueStr = new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0]; // 14 days standard
+
+            borrowTransactions.push({
+                TransactionID: nextTID,
+                MemberID: res.MemberID,
+                CopyID: copyToIssue.CopyID,
+                BorrowDate: todayStr,
+                DueDate: dueStr,
+                ReturnDate: null,
+                Status: 'Active'
+            });
+
+            pushSystemLog(`Hold waitlist fulfilled. Auto-assigned Copy ID ${copyToIssue.CopyID} of "${book.Title}" to member.`, "checkout");
+            showToast("Hold Fulfilled", "Hold reservation converted to active borrow.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+        }
+
+        function cancelHold(rID) {
+            const res = reservations.find(r => r.ReservationID === rID);
+            if (!res) return;
+
+            res.Status = 'Cancelled';
+            pushSystemLog(`Hold reservation cancelled by user command.`, "system");
+            showToast("Hold Cancelled", "Reservation successfully cancelled.", "indigo");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+        }
+
+        // ========================== MODALS TRIGGERS SYSTEM ==========================
+        function openModalBackdrop() {
+            const backdrop = document.getElementById('modal-backdrop');
+            backdrop.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+            document.querySelectorAll('.modal-box').forEach(el => {
+                el.classList.add('hidden', 'scale-95', 'opacity-0');
+            });
+            selectedBookIDForCopies = null;
+        }
+
+        function openAddBookModal() {
+            openModalBackdrop();
+            const modal = document.getElementById('modal-add-book');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+
+        function openAddMemberModal() {
+            openModalBackdrop();
+            const modal = document.getElementById('modal-add-member');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+
+        function openAddStaffModal() {
+            openModalBackdrop();
+            const modal = document.getElementById('modal-add-staff');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+            toggleStaffSubtypeFields();
+        }
+
+        function openReservationModal() {
+            openModalBackdrop();
+            const modal = document.getElementById('modal-add-reservation');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+
+        function openCategoryModal() {
+            openModalBackdrop();
+            const modal = document.getElementById('modal-manage-categories');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+            renderCategoryListTable();
+        }
+
+        function viewPhysicalCopiesForBook(bookID) {
+            selectedBookIDForCopies = bookID;
+            const book = books.find(b => b.BookID === bookID);
+            if (!book) return;
+
+            openModalBackdrop();
+            const modal = document.getElementById('modal-copies');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('scale-95', 'opacity-0'), 50);
+
+            document.getElementById('copies-modal-title').innerText = book.Title;
+            document.getElementById('copies-modal-isbn').innerText = `ISBN Reference: ${book.ISBN}`;
+            
+            renderBookCopiesInModal();
+        }
+
+        function viewPhysicalCopiesForBookByCopyID(bookID) {
+            switchTab('catalog');
+            viewPhysicalCopiesForBook(bookID);
+        }
+
+        function renderBookCopiesInModal() {
+            const tbody = document.getElementById('copies-table-body');
+            tbody.innerHTML = '';
+
+            const copies = bookCopies.filter(c => c.BookID === selectedBookIDForCopies);
+            
+            copies.forEach(c => {
+                let statusBadge = c.IsAvailable ? 
+                    `<span class="px-2 py-0.5 text-[10px] font-bold bg-green-50 text-green-700 rounded-full">Available inside Rack</span>` :
+                    `<span class="px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 rounded-full">Circulating (Out)</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition text-slate-600">
+                        <td class="px-4 py-2 font-black">Copy #${c.CopyID}</td>
+                        <td class="px-4 py-2">
+                            <select onchange="updateCopyCondition(${c.CopyID}, this.value)" class="bg-white border rounded p-0.5 text-[10px]">
+                                <option value="Good" ${c.Condition === 'Good' ? 'selected' : ''}>Good</option>
+                                <option value="Fair" ${c.Condition === 'Fair' ? 'selected' : ''}>Fair</option>
+                                <option value="Damaged" ${c.Condition === 'Damaged' ? 'selected' : ''}>Damaged</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-2">${statusBadge}</td>
+                        <td class="px-4 py-2 text-slate-400 font-mono">${c.AcquiredDate}</td>
+                        <td class="px-4 py-2 text-right">
+                            <button onclick="deletePhysicalCopy(${c.CopyID})" class="text-rose-500 hover:text-rose-700 font-black text-sm">&times;</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateCopyCondition(copyID, condition) {
+            const copy = bookCopies.find(c => c.CopyID === copyID);
+            if (copy) {
+                copy.Condition = condition;
+                pushSystemLog(`Updated Condition State of Copy ID ${copyID} to ${condition}.`, "system");
+                saveStateToLocalStorage();
+                renderAllViews();
+            }
+        }
+
+        function addPhysicalBookCopyDirectly() {
+            if (!selectedBookIDForCopies) return;
+
+            const condition = document.getElementById('new-copy-condition').value;
+            const book = books.find(b => b.BookID === selectedBookIDForCopies);
+            if (!book) return;
+
+            const nextCID = Math.max(...bookCopies.map(c => c.CopyID), 0) + 1;
+            const acquiredStr = new Date().toISOString().split('T')[0];
+
+            bookCopies.push({
+                CopyID: nextCID,
+                BookID: selectedBookIDForCopies,
+                Condition: condition,
+                IsAvailable: 1,
+                AcquiredDate: acquiredStr
+            });
+
+            // Update parent numbers
+            book.TotalCopies += 1;
+            book.AvailableCopies += 1;
+
+            pushSystemLog(`Added new physically tracked copy ID ${nextCID} of "${book.Title}".`, "system");
+            showToast("Physical Copy Registered", "Physical copy record appended to weak entities collection.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            renderBookCopiesInModal();
+        }
+
+        function deletePhysicalCopy(copyID) {
+            const copyIdx = bookCopies.findIndex(c => c.CopyID === copyID);
+            if (copyIdx === -1) return;
+
+            const copy = bookCopies[copyIdx];
+            const book = books.find(b => b.BookID === copy.BookID);
+
+            if (!copy.IsAvailable) {
+                showToast("Action Forbidden", "This copy is currently checked out on active loan. Settle return first.", "red");
+                return;
+            }
+
+            bookCopies.splice(copyIdx, 1);
+            
+            if (book) {
+                book.TotalCopies = Math.max(0, book.TotalCopies - 1);
+                book.AvailableCopies = Math.max(0, book.AvailableCopies - 1);
+            }
+
+            pushSystemLog(`Deleted physically tracked copy ID ${copyID}.`, "system");
+            showToast("Copy Deleted", "Copy entity detached from the database catalogue.", "indigo");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            renderBookCopiesInModal();
+        }
+
+        // ========================== FORM SAVERS DML ==========================
+
+        // BOOK RECORDS
+        function saveNewBook(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('new-book-title').value;
+            const isbn = document.getElementById('new-book-isbn').value;
+            const year = parseInt(document.getElementById('new-book-year').value);
+            const pub = document.getElementById('new-book-publisher').value;
+            const cat = parseInt(document.getElementById('new-book-category').value);
+            const authID = parseInt(document.getElementById('new-book-author').value);
+            const copiesCount = parseInt(document.getElementById('new-book-copies').value);
+
+            // Constraint checks
+            if (books.find(b => b.ISBN === isbn)) {
+                showToast("DML Error", "Unique Constraint Violated: ISBN code already exists inside the database.", "red");
+                return;
+            }
+
+            const nextID = Math.max(...books.map(b => b.BookID), 0) + 1;
+            
+            // Insert parent record
+            books.push({
+                BookID: nextID,
+                ISBN: isbn,
+                Title: title,
+                PublicationYear: year,
+                Publisher: pub,
+                CategoryID: cat,
+                TotalCopies: copiesCount,
+                AvailableCopies: copiesCount
+            });
+
+            // Insert associative maps
+            bookAuthors.push({ BookID: nextID, AuthorID: authID });
+
+            // Hydrate multiple physical copy entities
+            const acquiredStr = new Date().toISOString().split('T')[0];
+            let lastCopyID = Math.max(...bookCopies.map(c => c.CopyID), 0);
+            for (let i = 0; i < copiesCount; i++) {
+                lastCopyID++;
+                bookCopies.push({
+                    CopyID: lastCopyID,
+                    BookID: nextID,
+                    Condition: 'Good',
+                    IsAvailable: 1,
+                    AcquiredDate: acquiredStr
+                });
+            }
+
+            pushSystemLog(`DML INSERT: Created Book title "${title}" with ${copiesCount} physical copies inside rack.`, "system");
+            showToast("Book Catalogued", `Inserted catalog row and ${copiesCount} tracked copies.`, "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            closeModal();
+            document.getElementById('add-book-form').reset();
+        }
+
+        function deleteBookRecord(bookID) {
+            const index = books.findIndex(b => b.BookID === bookID);
+            if (index === -1) return;
+
+            const book = books[index];
+
+            // Constraint check: check active borrow transactions
+            const activeCopies = bookCopies.filter(c => c.BookID === bookID && c.IsAvailable === 0);
+            if (activeCopies.length > 0) {
+                showToast("Constraint Triggered", "FOREIGN KEY violation: Active borrowed copies exist. Delete blocked.", "red");
+                return;
+            }
+
+            // Perform Cascade-like cleanups in our simulation
+            books.splice(index, 1);
+            bookAuthors = bookAuthors.filter(ba => ba.BookID !== bookID);
+            bookCopies = bookCopies.filter(bc => bc.BookID !== bookID);
+            reservations = reservations.filter(r => r.BookID !== bookID);
+
+            pushSystemLog(`DML DELETE ON CASCADE: Detached all nodes linked with book title ID: ${bookID}.`, "system");
+            showToast("Catalog Row Purged", "Cleaned catalogs with Cascade actions.", "indigo");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+        }
+
+        // MEMBER RECORDS
+        function saveNewMember(event) {
+            event.preventDefault();
+
+            const card = document.getElementById('new-member-card').value;
+            const name = document.getElementById('new-member-name').value;
+            const email = document.getElementById('new-member-email').value;
+            const type = document.getElementById('new-member-type').value;
+            const phone = document.getElementById('new-member-phone').value;
+            const street = document.getElementById('new-member-street').value;
+            const city = document.getElementById('new-member-city').value;
+
+            if (members.find(m => m.CardNumber === card) || members.find(m => m.Email === email)) {
+                showToast("Integrity Failure", "UNIQUE Constraint violated: Card Number or Email address exists.", "red");
+                return;
+            }
+
+            const nextID = Math.max(...members.map(m => m.MemberID), 0) + 1;
+            const joinStr = new Date().toISOString().split('T')[0];
+
+            members.push({
+                MemberID: nextID,
+                CardNumber: card,
+                FullName: name,
+                Email: email,
+                Street: street,
+                City: city,
+                ZipCode: "44000",
+                MembershipType: type,
+                JoinDate: joinStr,
+                IsActive: 1
+            });
+
+            // Insert phone multi-valued record
+            const nextPID = Math.max(...memberPhones.map(p => p.PhoneID), 0) + 1;
+            memberPhones.push({
+                PhoneID: nextPID,
+                MemberID: nextID,
+                Phone: phone
+            });
+
+            pushSystemLog(`DML INSERT: Registered Member "${name}" (ID: ${nextID}).`, "system");
+            showToast("Member Registered", "Record appended to physical database index.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            closeModal();
+            document.getElementById('add-member-form').reset();
+        }
+
+        // STAFF RECORDS & HIERARCHIES
+        function toggleStaffSubtypeFields() {
+            const type = document.getElementById('new-staff-type').value;
+            document.querySelectorAll('.subtype-fields').forEach(el => el.classList.add('hidden'));
+
+            if (type === 'Librarian') {
+                document.getElementById('subtype-fields-librarian').classList.remove('hidden');
+            } else if (type === 'Assistant') {
+                document.getElementById('subtype-fields-assistant').classList.remove('hidden');
+            } else if (type === 'Admin') {
+                document.getElementById('subtype-fields-admin').classList.remove('hidden');
+            }
+        }
+
+        function saveNewStaff(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('new-staff-name').value;
+            const email = document.getElementById('new-staff-email').value;
+            const salary = parseFloat(document.getElementById('new-staff-salary').value);
+            const hire = document.getElementById('new-staff-hire').value;
+            const type = document.getElementById('new-staff-type').value;
+
+            if (staff.find(s => s.Email === email)) {
+                showToast("Relational Conflict", "Staff profile with specified email is already listed.", "red");
+                return;
+            }
+
+            const nextID = Math.max(...staff.map(s => s.StaffID), 0) + 1;
+
+            // Supertype base row
+            const newRow = {
+                StaffID: nextID,
+                FullName: name,
+                Email: email,
+                HireDate: hire,
+                Salary: salary,
+                StaffType: type
+            };
+
+            // Subtype properties attachment
+            if (type === 'Librarian') {
+                newRow.Specialization = document.getElementById('new-staff-specialization').value || "Reference Services";
+            } else if (type === 'Assistant') {
+                newRow.ShiftTime = document.getElementById('new-staff-shift').value;
+            } else if (type === 'Admin') {
+                newRow.AccessLevel = document.getElementById('new-staff-access').value;
+            }
+
+            staff.push(newRow);
+
+            pushSystemLog(`Hierarchical DML INSERT: Appended Staff Supertype "${name}" as subtype class ${type}.`, "system");
+            showToast("Staff Registered", `New subtype row registered.`, "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            closeModal();
+            document.getElementById('add-staff-form').reset();
+        }
+
+        // RESERVATION SAVER
+        function saveNewReservation(event) {
+            event.preventDefault();
+
+            const mID = parseInt(document.getElementById('new-res-member').value);
+            const bID = parseInt(document.getElementById('new-res-book').value);
+            const resDate = document.getElementById('new-res-start').value;
+            const expDate = document.getElementById('new-res-expiry').value;
+
+            if (new Date(expDate) <= new Date(resDate)) {
+                showToast("Constraint Check Failure", "Reservation Expiry MUST fall after start reservation date.", "red");
+                return;
+            }
+
+            const nextRID = Math.max(...reservations.map(r => r.ReservationID), 0) + 1;
+            reservations.push({
+                ReservationID: nextRID,
+                MemberID: mID,
+                BookID: bID,
+                ReservationDate: resDate,
+                ExpiryDate: expDate,
+                Status: 'Pending'
+            });
+
+            pushSystemLog("DML Reservation hold successfully placed inside queues.", "system");
+            showToast("Hold Registered", "Hold reservation logged inside databases lists.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            closeModal();
+            document.getElementById('add-reservation-form').reset();
+        }
+
+        // CATEGORY SAVER
+        function renderCategoryListTable() {
+            const tbody = document.getElementById('categories-table-body');
+            tbody.innerHTML = '';
+
+            categories.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="px-3 py-1.5 font-bold">${c.CategoryID}</td>
+                        <td class="px-3 py-1.5 font-semibold text-slate-800">${c.CategoryName}</td>
+                        <td class="px-3 py-1.5 text-slate-500">${c.Description || 'No description listed.'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function saveNewCategory(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('new-cat-name').value;
+            const desc = document.getElementById('new-cat-desc').value;
+
+            if (categories.find(c => c.CategoryName.toLowerCase() === name.toLowerCase())) {
+                showToast("Relational Conflict", "Category of this type is already registered.", "red");
+                return;
+            }
+
+            const nextID = Math.max(...categories.map(c => c.CategoryID), 0) + 1;
+            categories.push({
+                CategoryID: nextID,
+                CategoryName: name,
+                Description: desc
+            });
+
+            pushSystemLog(`DML INSERT: Added Category Genre Category: ${name}.`, "system");
+            showToast("Category Added", "Dynamic Category class registered inside schemas.", "green");
+
+            saveStateToLocalStorage();
+            renderAllViews();
+            renderCategoryListTable();
+            document.getElementById('add-category-form').reset();
+        }
+
+
+        // ========================== CS160 SQL PLAYGROUND ENGINE ==========================
+        function runSimulatedSQL(queryKey) {
+            const consoleDisplay = document.getElementById('sql-query-display');
+            const table = document.getElementById('sql-results-table');
+            const rowCount = document.getElementById('sql-row-count');
+
+            let sqlCode = "";
+            let headers = [];
+            let rows = [];
+
+            if (queryKey === 'all_books') {
+                sqlCode = `SELECT b.BookID, b.ISBN, b.Title, b.Publisher, c.CategoryName 
+FROM Book b
+INNER JOIN Category c ON b.CategoryID = c.CategoryID;`;
+                
+                headers = ["BookID", "ISBN", "Book Title", "Publisher Name", "Category Genre"];
+                rows = books.map(b => {
+                    const cat = categories.find(c => c.CategoryID === b.CategoryID);
+                    return [b.BookID, b.ISBN, b.Title, b.Publisher, cat ? cat.CategoryName : "Undefined"];
+                });
+
+            } else if (queryKey === 'overdue_fines') {
+                sqlCode = `SELECT m.CardNumber, m.FullName, f.Amount, bt.DueDate, f.PaidStatus
+FROM Member m
+INNER JOIN BorrowTransaction bt ON m.MemberID = bt.MemberID
+INNER JOIN Fine f ON bt.TransactionID = f.TransactionID
+WHERE f.PaidStatus = 0;`;
+
+                headers = ["Card Number", "Full Name", "Overdue Penalty Amount", "Expected Due Date", "Fine Settle Status"];
+                
+                const unpaidFinesList = fines.filter(f => f.PaidStatus === 0);
+                rows = unpaidFinesList.map(f => {
+                    const trans = borrowTransactions.find(t => t.TransactionID === f.TransactionID);
+                    const member = trans ? members.find(m => m.MemberID === trans.MemberID) : null;
+                    return [
+                        member ? member.CardNumber : "No Card",
+                        member ? member.FullName : "Unknown",
+                        `PKR ${f.Amount}`,
+                        trans ? trans.DueDate : "Null",
+                        f.PaidStatus ? "Paid" : "UNPAID PENALTY"
+                    ];
+                });
+
+            } else if (queryKey === 'staff_unions') {
+                sqlCode = `-- UNION structural subtype records of unified Base tables
+SELECT FullName, Salary, StaffType, 'Digital Archivist / Class Specialist' AS ExtraDetails FROM Staff WHERE StaffType = 'Librarian'
+UNION
+SELECT FullName, Salary, StaffType, 'Shift Scheduled Duty' AS ExtraDetails FROM Staff WHERE StaffType = 'Assistant'
+UNION
+SELECT FullName, Salary, StaffType, 'Global SysAccess Level Granted' AS ExtraDetails FROM Staff WHERE StaffType = 'Admin';`;
+
+                headers = ["Unified Full Name", "Monthly Salary (PKR)", "Staff Subtype Class", "Subtype Inherited Attributes"];
+                rows = staff.map(s => {
+                    let details = "";
+                    if (s.StaffType === 'Librarian') details = `Specialist: ${s.Specialization || 'Reference'}`;
+                    else if (s.StaffType === 'Assistant') details = `Shift: ${s.ShiftTime || 'Morning'}`;
+                    else if (s.StaffType === 'Admin') details = `SysAccess: ${s.AccessLevel || 'Level1'}`;
+                    return [s.FullName, s.Salary.toLocaleString(), s.StaffType, details];
+                });
+
+            } else if (queryKey === 'book_authors') {
+                sqlCode = `SELECT b.ISBN, b.Title, CONCAT(a.FirstName, ' ', a.LastName) AS AuthorFullName, a.Nationality
+FROM Book b
+INNER JOIN BookAuthor ba ON b.BookID = ba.BookID
+INNER JOIN Author a ON ba.AuthorID = a.AuthorID;`;
+
+                headers = ["ISBN Code", "Book Title", "Author Associated Name", "Author Nationality"];
+                rows = [];
+                bookAuthors.forEach(ba => {
+                    const book = books.find(b => b.BookID === ba.BookID);
+                    const author = authors.find(a => a.AuthorID === ba.AuthorID);
+                    if (book && author) {
+                        rows.push([book.ISBN, book.Title, `${author.FirstName} ${author.LastName}`, author.Nationality || "Global"]);
+                    }
+                });
+            }
+
+            // Render console
+            consoleDisplay.textContent = sqlCode;
+            rowCount.innerText = `${rows.length} relational tuples returned`;
+
+            // Render results table
+            let tableHTML = `<thead class="bg-slate-800 text-white font-bold font-mono"><tr>`;
+            headers.forEach(h => {
+                tableHTML += `<th class="px-4 py-3">${h}</th>`;
+            });
+            tableHTML += `</tr></thead><tbody class="divide-y divide-slate-200">`;
+
+            if (rows.length === 0) {
+                tableHTML += `<tr><td colspan="${headers.length}" class="p-5 text-center italic text-slate-400">Empty set returned. Relations fulfilled zero matches.</td></tr>`;
+            } else {
+                rows.forEach(r => {
+                    tableHTML += `<tr class="hover:bg-slate-50">`;
+                    r.forEach(val => {
+                        tableHTML += `<td class="px-4 py-2.5 font-medium font-mono">${val}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+            }
+            tableHTML += `</tbody>`;
+            table.innerHTML = tableHTML;
+
+            pushSystemLog(`Compiled SQL: executed query reference ${queryKey}.`, "system");
+        }
+
+
+        // WINDOW START LOAD
+        window.onload = function() {
+            initDatabase();
+            renderAllViews();
+            
+            // Set standard dates in checkout selector
+            document.getElementById('checkout-issue-date').value = new Date().toISOString().split('T')[0];
+            const nextFortnight = new Date();
+            nextFortnight.setDate(nextFortnight.getDate() + 14);
+            document.getElementById('checkout-due-date').value = nextFortnight.toISOString().split('T')[0];
+
+            // Set reserve dates standard
+            document.getElementById('new-res-start').value = new Date().toISOString().split('T')[0];
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            document.getElementById('new-res-expiry').value = nextWeek.toISOString().split('T')[0];
+
+            // Setup Mobile Menu Toggle Action
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const nav = document.getElementById('sidebar-nav');
+                nav.classList.toggle('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
